@@ -9,8 +9,8 @@ Author:- OpsTree Solutions
 
 import json
 import time
-from locust import Locust, events
-from locust.core import TaskSet, task
+from locust import Locust, events, User, between
+from locust import TaskSet, task
 import redis
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -25,9 +25,11 @@ filename = "redis.json"
 
 configs = load_config(filename)
 
+print(configs)
+
 class RedisClient(object):
-    def __init__(self, host=configs["redis_host"], port=configs["redis_port"]):
-        self.rc = redis.StrictRedis(host=host, port=port)
+    def __init__(self, host=configs["redis_host"], port=configs["redis_port"], pw=configs['redis_password'], cert=configs['redis_cert']):
+        self.rc = redis.StrictRedis(host=host, port=port, password=pw, ssl=True, ssl_certfile=cert, ssl_cert_reqs=None, ssl_check_hostname=False)
         print(host, port)
 
     def query(self, key, command='GET'):
@@ -38,24 +40,34 @@ class RedisClient(object):
         total_time = int((time.time() - start_time) *1000000)
         if not result:
             result = ''
-            events.request_failure.fire(request_type=command, name=key, response_time=total_time, exception="Error")
+            events.request_failure.fire(request_type=command, name=key, response_time=total_time, response_length=0, exception="Error")
         else:
             length = len(result)
             events.request_success.fire(request_type=command, name=key, response_time=total_time, response_length=length)
         return result
 
-class RedisLocust(Locust):
+class RedisLocust(User):
     def __init__(self, *args, **kwargs):
         super(RedisLocust, self).__init__(*args, **kwargs)
         self.client = RedisClient()
-        self.key = 'key2'
-        self.value = 'value2'
+        self.client.rc.set('key1', 'value1')
+        self.client.rc.set('key2', 'value2')
+
+    wait_time = between(0, 0.3)
+
+    @task(1)
+    def get_time(self):
+        self.client.query('key1')
+
+
 
 class RedisLua(RedisLocust):
     min_wait = 100
     max_wait = 100
 
-    class task_set(TaskSet):
-        @task(1)
-        def get_time(self):
-            self.client.query('key1')
+    @task(1)
+    def get_time(self):
+        self.client.query('key2')
+
+    wait_time = between(0, 0.5)
+
