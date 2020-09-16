@@ -19,7 +19,9 @@ def load_config(filepath):
 def redis_populate(filepath):
     """Function to populate keys in Redis Server"""
     configs = load_config(filepath)
-    client = redis.StrictRedis(host=configs["redis_host"], port=configs["redis_port"])
+    client = redis.StrictRedis(host=configs['redis_host'], port=configs['redis_port'], password=configs['redis_password'], ssl=True, ssl_certfile=configs['redis_cert'],
+             ssl_cert_reqs=None, ssl_check_hostname=False)
+
     for i in range(100000):
         key='key'+str(i)
         value='value'+str(i)
@@ -28,7 +30,7 @@ def redis_populate(filepath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Redis Performance Testing")
-    parser.add_argument("--filepath", help="Path of the Json File(Default is redis.json)")
+    parser.add_argument("--filepath", help="Path of the Json File(Default is redis.json)", default='redis.json')
     args = parser.parse_args()
     if args.filepath is not None:
         redis_populate(args.filepath)

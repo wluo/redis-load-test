@@ -9,8 +9,8 @@ Author:- OpsTree Solutions
 
 import json
 import time
-from locust import Locust, events
-from locust.core import TaskSet, task
+from locust import Locust, User
+from locust import between, events, task
 import redis
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -27,8 +27,9 @@ filename = "redis.json"
 configs = load_config(filename)
 
 class RedisClient(object):
-    def __init__(self, host=configs["redis_host"], port=configs["redis_port"], password=configs["redis_password"]):
-        self.rc = redis.StrictRedis(host=host, port=port, password=password)
+    def __init__(self, host=configs['redis_host'], port=configs['redis_port'], pw=configs['redis_password'], cert=configs['redis_cert']):
+        self.rc = redis.StrictRedis(host=host, port=port, password=pw, ssl=True, ssl_certfile=cert, ssl_cert_reqs=None, ssl_check_hostname=False)
+
     
     def query(self, key, command='GET'):
         """Function to Test GET operation on Redis"""
@@ -40,7 +41,7 @@ class RedisClient(object):
                 result = ''
         except Exception as e:
             total_time = int((time.time() - start_time) * 1000)
-            events.request_failure.fire(request_type=command, name=key, response_time=total_time, exception=e)
+            events.request_failure.fire(request_type=command, name=key, response_time=total_time, response_length=0, exception=e)
         else:
             total_time = int((time.time() - start_time) * 1000)
             length = len(result)
@@ -57,40 +58,42 @@ class RedisClient(object):
                 result = ''
         except Exception as e:
             total_time = int((time.time() - start_time) * 1000)
-            events.request_failure.fire(request_type=command, name=key, response_time=total_time, exception=e)
+            events.request_failure.fire(request_type=command, name=key, response_time=total_time, response_length=0, exception=e)
         else:
             total_time = int((time.time() - start_time) * 1000)
             length = 1
             events.request_success.fire(request_type=command, name=key, response_time=total_time, response_length=length)
         return result
 
-class RedisLocust(Locust):
+class RedisLocust(User):
     def __init__(self, *args, **kwargs):
         super(RedisLocust, self).__init__(*args, **kwargs)
         self.client = RedisClient()
         self.key = 'key1'
         self.value = 'value1'
 
-class RedisLua(RedisLocust):
-    min_wait = 100
-    max_wait = 100
+#class RedisLua(RedisLocust):
+#    min_wait = 100
+#    max_wait = 100
 
-    class task_set(TaskSet):
-        @task(2)
-        def get_time(self):
-            for i in range(100):
-                self.key='key'+str(i)
-                self.client.query(self.key)
+    wait_time = between(0, 0.2)
 
-        @task(1)
-        def write(self):
-            for i in range(100):
-                self.key='key'+str(i)
-                self.value='value'+str(i)
-                self.client.write(self.key,self.value)
+    @task(2)
+    def get_time(self):
+        for i in range(100):
+            self.key='key'+str(i)
+            self.client.query(self.key)
 
-        @task(1)
-        def get_key(self):
-            var=str(randint(1,99))
-            self.key='key'+var
-            self.value='value'+var
+    @task(1)
+    def write(self):
+        for i in range(100):
+            self.key='key'+str(i)
+            self.value='value'+str(i)
+            self.client.write(self.key,self.value)
+
+    @task(1)
+    def get_key(self):
+        var=str(randint(1,99))
+        self.key='key'+var
+        self.value='value'+var
+
