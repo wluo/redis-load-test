@@ -41,10 +41,10 @@ class RedisClient(object):
             if not result:
                 result = ''
         except Exception as e:
-            total_time = int((time.time() - start_time) * 1000)
+            total_time = round((time.time() - start_time) * 1000, 2)
             events.request_failure.fire(request_type=command, name=key, response_time=total_time, response_length=0, exception=e)
         else:
-            total_time = int((time.time() - start_time) * 1000)
+            total_time = round((time.time() - start_time) * 1000, 2)
             length = len(result)
             events.request_success.fire(request_type=command, name=key, response_time=total_time, response_length=length)
         return result
@@ -54,34 +54,60 @@ class RedisClient(object):
         result = None
         start_time = time.time()
         try:
-            result=self.rc.set(key,value)
+            result = self.rc.set(key,value)
             if not result:
                 result = ''
         except Exception as e:
-            total_time = int((time.time() - start_time) * 1000)
+            total_time = round((time.time() - start_time) * 1000, 2)
             events.request_failure.fire(request_type=command, name=key, response_time=total_time, response_length=0, exception=e)
         else:
-            total_time = int((time.time() - start_time) * 1000)
-            length = 1
+            total_time = round((time.time() - start_time) * 1000, 2)
+            length = len(result)
             events.request_success.fire(request_type=command, name=key, response_time=total_time, response_length=length)
         return result
 
-    def execute(self, *args):
-        """Function to Test SET operation on Redis"""
+    def execute(self, name, *args):
+        """Function to execute some operation on Redis"""
         result = None
         start_time = time.time()
         try:
-            result=self.rc.execute_command(*args)
+            result = self.rc.execute_command(*args)
             if not result:
                 result = ''
         except Exception as e:
-            total_time = int((time.time() - start_time) * 1000)
-            events.request_failure.fire(request_type=args[0], name=args[0], response_time=total_time, response_length=0, exception=e)
+            total_time = round((time.time() - start_time) * 1000, 2)
+            events.request_failure.fire(request_type=args[0], name=name, response_time=total_time, response_length=0, exception=e)
         else:
-            total_time = int((time.time() - start_time) * 1000)
-            length = 1
-            events.request_success.fire(request_type=args[0], name=args[0], response_time=total_time, response_length=length)
+            total_time = round((time.time() - start_time) * 1000, 2)
+            if type(result) == type(''):
+                length = len(result)
+            else:
+                length = 1
+            events.request_success.fire(request_type=args[0], name=name, response_time=total_time, response_length=length)
         return result
+
+    def execute_pipeline(self, name, pipe):
+        """Function to execute a pipeline of operations on Redis"""
+        result = None
+        start_time = time.time()
+        try:
+            result = pipe.execute()
+            if not result:
+                result = ''
+        except Exception as e:
+            total_time = round((time.time() - start_time) * 1000, 2)
+            events.request_failure.fire(request_type='pipeline', name=name, response_time=total_time, response_length=0, exception=e)
+        else:
+            total_time = round((time.time() - start_time) * 1000, 2)
+            length = 0
+            for item in result:
+               if type(item) == type(''):
+                   length += len(item) 
+               else:
+                   length += 1
+            events.request_success.fire(request_type='pipeline', name=name, response_time=total_time, response_length=length)
+        return result
+
 
 
 class RedisLocust(User):
@@ -93,9 +119,17 @@ class RedisLocust(User):
 
     @task
     def get_ping_time(self):
-        self.client.execute('PING')
+        self.client.execute('ping', 'PING')
 
     @task
     def get_ping_message_time(self):
-        self.client.execute('PING', 'ping with a message')
+        self.client.execute('ping_with_message', 'PING', 'ping with a message')
  
+    @task
+    def get_ping_message_pipelined(self):
+        pipe = self.client.rc.pipeline()
+        for i in range(6):
+            pipe.pipeline_execute_command('PING', 'ping with message (pipelined)')
+
+        self.client.execute_pipeline('pipelined pings (6x)', pipe)
+
