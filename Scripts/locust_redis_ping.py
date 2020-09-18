@@ -125,7 +125,7 @@ class RedisLocust(User):
     def get_ping_message_time(self):
         self.client.execute('ping_with_message', 'PING', 'ping with a message')
  
-    @task
+    #@task
     def get_ping_message_pipelined(self):
         pipe = self.client.rc.pipeline()
         for i in range(6):
