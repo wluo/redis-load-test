@@ -114,17 +114,16 @@ class RedisClient(object):
 
 
 
-class RedisLocustSetTest(User):
+class RedisLocustLpushTest(User):
     def __init__(self, *args, **kwargs):
-        super(RedisLocustSetTest, self).__init__(*args, **kwargs)
+        super(RedisLocustLpushTest, self).__init__(*args, **kwargs)
         self.client = RedisClient()
 
     wait_time = constant(0.01)
 
     @task
-    def set_random_value(self):
-        tag = f'{ randint(1, 100) }'
-        key = f'key:{tag}:{ randint(1, 100000000) }'
-        val = f'val_{ key }'
-        self.client.write(key, val, name='set_test')
+    def lpush_test(self):
+        key = f'mylist:{ randint(1, 100) }'
+        val = f'{ randint(1, 100000000) }'
+        self.client.execute('lpush_test', 'LPUSH', key, val)
 

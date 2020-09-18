@@ -32,8 +32,10 @@ class RedisClient(object):
         self.rc = redis.StrictRedis(host=host, port=port, password=pw, ssl=True, ssl_certfile=cert, ssl_cert_reqs=None, ssl_check_hostname=False)
 
     
-    def query(self, key, command='GET'):
+    def query(self, key, command='GET', name=None):
         """Function to Test GET operation on Redis"""
+        if not name:
+            name = key
         result = None
         start_time = time.time()
         try:
@@ -42,15 +44,18 @@ class RedisClient(object):
                 result = ''
         except Exception as e:
             total_time = round((time.time() - start_time) * 1000, 2)
-            events.request_failure.fire(request_type=command, name=key, response_time=total_time, response_length=0, exception=e)
+            events.request_failure.fire(request_type=command, name=name, response_time=total_time, response_length=0, exception=e)
         else:
             total_time = round((time.time() - start_time) * 1000, 2)
             length = len(result)
-            events.request_success.fire(request_type=command, name=key, response_time=total_time, response_length=length)
+            events.request_success.fire(request_type=command, name=name, response_time=total_time, response_length=length)
         return result
 
-    def write(self, key, value, command='SET'):
+
+    def write(self, key, value, command='SET', name=None):
         """Function to Test SET operation on Redis"""
+        if not name:
+            name = key
         result = None
         start_time = time.time()
         try:
@@ -59,12 +64,13 @@ class RedisClient(object):
                 result = ''
         except Exception as e:
             total_time = round((time.time() - start_time) * 1000, 2)
-            events.request_failure.fire(request_type=command, name=key, response_time=total_time, response_length=0, exception=e)
+            events.request_failure.fire(request_type=command, name=name, response_time=total_time, response_length=0, exception=e)
         else:
             total_time = round((time.time() - start_time) * 1000, 2)
             length = len(key) + len(value)
-            events.request_success.fire(request_type=command, name=key, response_time=total_time, response_length=length)
+            events.request_success.fire(request_type=command, name=name, response_time=total_time, response_length=length)
         return result
+
 
     def execute(self, name, *args):
         """Function to execute some operation on Redis"""
@@ -85,6 +91,7 @@ class RedisClient(object):
                 length = 1
             events.request_success.fire(request_type=args[0], name=name, response_time=total_time, response_length=length)
         return result
+
 
     def execute_pipeline(self, name, pipe):
         """Function to execute a pipeline of operations on Redis"""
@@ -119,6 +126,7 @@ class RedisLocustGetTest(User):
 
     @task
     def get_random_value(self):
-        key = 'key:{tag}:{ int(random()*10000) }'
-        self.client.query(key)
+        tag = f'{ randint(1, 100) }'
+        key = f'key:{tag}:{ randint(1, 100000000) }'
+        self.client.query(key, name='get_test')
 
