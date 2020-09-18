@@ -32,6 +32,7 @@ if 'tag' in configs:
 else:
     tag = f'{ randint(0, 100) }'
 
+
 class RedisClient(object):
     def __init__(self, host=configs['redis_host'], port=configs['redis_port'], pw=configs['redis_password'], cert=configs['redis_cert']):
         self.rc = redis.StrictRedis(host=host, port=port, password=pw, ssl=True, ssl_certfile=cert, ssl_cert_reqs=None, ssl_check_hostname=False)
@@ -119,16 +120,15 @@ class RedisClient(object):
 
 
 
-class RedisLocustLpushTest(User):
+class RedisLocustRpushTest(User):
     def __init__(self, *args, **kwargs):
-        super(RedisLocustLpushTest, self).__init__(*args, **kwargs)
+        super(RedisLocustRpushTest, self).__init__(*args, **kwargs)
         self.client = RedisClient()
 
     wait_time = constant(0.01)
 
     @task
-    def lpush_test(self):
-        key = f'mylist:{ tag }'
+    def rpush_test(self):
+        key = f'mylist:{{{ tag }}}'
         val = f'{ randint(1, 100000000) }'
-        self.client.execute('lpush_test', 'LPUSH', key, val)
-
+        self.client.execute('rpush_test', 'RPUSH', key, val)

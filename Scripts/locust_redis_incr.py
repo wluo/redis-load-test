@@ -27,6 +27,11 @@ filename = "redis.json"
 
 configs = load_config(filename)
 
+if 'tag' in configs:
+    tag = configs['tag']
+else:
+    tag = f'{ randint(0, 100) }'
+
 class RedisClient(object):
     def __init__(self, host=configs['redis_host'], port=configs['redis_port'], pw=configs['redis_password'], cert=configs['redis_cert']):
         self.rc = redis.StrictRedis(host=host, port=port, password=pw, ssl=True, ssl_certfile=cert, ssl_cert_reqs=None, ssl_check_hostname=False)
@@ -123,7 +128,6 @@ class RedisLocustIncrTest(User):
 
     @task
     def incr_random_key(self):
-        tag = f'{ randint(1, 100) }'
         key = f'counter:{tag}:{ randint(1, 100000000) }'
         self.client.execute('incr_test', 'INCR', key)
 
