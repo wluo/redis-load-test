@@ -14,7 +14,7 @@ from locust_redis_client import *
 class RedisLocustRpushTest(User):
     def __init__(self, *args, **kwargs):
         super(RedisLocustRpushTest, self).__init__(*args, **kwargs)
-        self.client = RedisClient()
+        self.client = LocustRedisClient()
 
     wait_time = constant(0.01)
 
