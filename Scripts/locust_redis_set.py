@@ -20,7 +20,7 @@ class RedisLocustSetTest(User):
 
     @task
     def set_random_value(self):
-        key = f'key:{tag}:{ randint(1, 100000000) }'
+        key = f'key:{{{tag}}}:{ randint(1, 100000000) }'
         val = f'val_{ key }'
         self.client.write(key, val, name='set_test')
 

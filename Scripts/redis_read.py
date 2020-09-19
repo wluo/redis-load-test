@@ -25,8 +25,6 @@ filename = "redis.json"
 
 configs = load_config(filename)
 
-print(configs)
-
 class RedisClient(object):
     def __init__(self, host=configs["redis_host"], port=configs["redis_port"], pw=configs['redis_password'], cert=configs['redis_cert']):
         self.rc = redis.StrictRedis(host=host, port=port, password=pw, ssl=True, ssl_certfile=cert, ssl_cert_reqs=None, ssl_check_hostname=False)

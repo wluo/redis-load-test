@@ -20,7 +20,7 @@ class RedisLocustLpushTest(User):
 
     @task
     def lpush_test(self):
-        key = f'mylist:{ tag }'
+        key = f'mylist:{{{ tag }}}'
         val = f'{ randint(1, 100000000) }'
         self.client.execute('lpush_test', 'LPUSH', key, val)
 

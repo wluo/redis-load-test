@@ -20,6 +20,6 @@ class RedisLocustGetTest(User):
 
     @task
     def get_random_value(self):
-        key = f'key:{tag}:{ randint(1, 100000000) }'
+        key = f'key:{{{tag}}}:{ randint(1, 100000000) }'
         self.client.query(key, name='get_test')
 

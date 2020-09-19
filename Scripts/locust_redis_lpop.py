@@ -11,15 +11,15 @@ Author:- Will Luo
 from locust_redis_client import *
 
 
-class RedisLocustIncrTest(User):
+class RedisLocustLpopTest(User):
     def __init__(self, *args, **kwargs):
-        super(RedisLocustIncrTest, self).__init__(*args, **kwargs)
+        super(RedisLocustLpopTest, self).__init__(*args, **kwargs)
         self.client = LocustRedisClient()
 
     wait_time = constant(0.01)
 
     @task
-    def incr_random_key(self):
-        key = f'counter:{{{tag}}}:{ randint(1, 100000000) }'
-        self.client.execute('incr_test', 'INCR', key)
+    def lpop_test(self):
+        key = f'mylist:{{{ tag }}}'
+        self.client.execute('lpop_test', 'LPOP', key)
 

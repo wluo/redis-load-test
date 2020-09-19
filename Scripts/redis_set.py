@@ -26,7 +26,6 @@ def redis_populate(filepath):
         key='key'+str(i)
         value='value'+str(i)
         client.set(key,value)
-        print(key,value)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Redis Performance Testing")
