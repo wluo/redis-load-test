@@ -3,7 +3,7 @@
 """
 This script uses the locust framework.
 
-We will generate keys (~60 chars) and vals (~160 chars) and do around 20% SETs and 80% GETs.
+We will generate keys (~60 chars) and vals (~160 chars) and do around 50% SETs and 50% GETs.
 
 The key and value sizes are based on average key size of course-progress-sec.
 
@@ -15,15 +15,15 @@ from locust_redis_client import *
 from locust_redis_set_get_base import RedisLocustSetGetTestBase
 
 
-class RedisLocustSetGet2080Test(RedisLocustSetGetTestBase):
+class RedisLocustSetGet5050Test(RedisLocustSetGetTestBase):
 
     wait_time = constant(0.1)
 
     def __init__(self, *args, **kwargs):
-        super(RedisLocustSetGet2080Test, self).__init__(*args, **kwargs)
+        super(RedisLocustSetGet5050Test, self).__init__(*args, **kwargs)
 
 
-    @task(4)
+    @task
     def get_values_task(self):
         self.get_random_values()
 
